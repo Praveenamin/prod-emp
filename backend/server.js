@@ -1,46 +1,43 @@
+// server.js
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
+const userRoutes = require('./routes/userRoutes');
+const employeeRoutes = require('./routes/employeeRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
+const quicklinkRoutes = require('./routes/quicklinkRoutes');
+
 const app = express();
+const PORT = process.env.PORT || 3338;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
-const userRoutes = require('./routes/userRoutes');
-const employeeRoutes = require('./routes/employeeRoutes');
-const itAssetRoutes = require('./routes/itAssetRoutes');
-const announcementRoutes = require('./routes/announcementRoutes'); // Added announcement routes
-
-// MongoDB connection
-const mongoURI = process.env.MONGO_URI || 'mongodb://employee_mongo:27017/employee-portal';
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected'))
-.catch((err) => console.error('MongoDB connection error:', err));
-
-// API route registration
 app.use('/api/users', userRoutes);
 app.use('/api/employees', employeeRoutes);
-app.use('/api/it-assets', itAssetRoutes);
-app.use('/api/announcements', announcementRoutes); // Register announcements
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/quicklinks', quicklinkRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Backend running' });
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('MongoDB connected successfully'))
+.catch(err => console.error('MongoDB connection error:', err));
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.send('Employee Portal Backend Running');
 });
 
 // Start server
-const PORT = process.env.PORT || 3338;
 app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
-
-const quicklinkRoutes = require('./routes/quicklinkRoutes');
-app.use('/api/quicklinks', quicklinkRoutes);
 

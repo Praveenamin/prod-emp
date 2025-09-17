@@ -1,34 +1,39 @@
-version: '3.8'
+version: '3.9'
+
 services:
-  mongo:
+  employee_mongo:
     image: mongo:6
     container_name: employee_mongo
-    restart: always
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
+      - mongo_data:/data/db
 
-  backend:
-    build: ./backend
+  employee_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: employee_backend
-    restart: always
+    restart: unless-stopped
     ports:
       - "3338:3338"
+    env_file:
+      - .env
     depends_on:
-      - mongo
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/employee-portal
+      - employee_mongo
 
-  frontend:
-    build: ./frontend
+  employee_frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: employee_frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "5005:5005"
     depends_on:
-      - backend
+      - employee_backend
 
 volumes:
-  mongo-data:
+  mongo_data:
 

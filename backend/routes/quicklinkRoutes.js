@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const quicklinkController = require('../controllers/quicklinkController');
+const { addQuicklink, getQuicklinks, deleteQuicklink } = require('../controllers/quicklinkController');
 
-router.get('/', quicklinkController.getQuicklinks);
-router.post('/', quicklinkController.addQuicklink);
-router.delete('/:id', quicklinkController.deleteQuicklink);
+router.post('/', addQuicklink);
+router.get('/', getQuicklinks);
+router.delete('/:id', deleteQuicklink);
 
 module.exports = router;
 

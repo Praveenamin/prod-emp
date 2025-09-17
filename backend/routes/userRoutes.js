@@ -1,12 +1,13 @@
-import express from "express";
-import { addUser, editUser, toggleHoldUser, deleteUser } from "../controllers/userController.js";
-
+const express = require('express');
 const router = express.Router();
+const { addUser, editUser, holdUser, deleteUser, getUsers } = require('../controllers/userController');
 
-router.post("/", addUser);
-router.put("/:id", editUser);
-router.patch("/:id/hold", toggleHoldUser);
-router.delete("/:id", deleteUser);
+// CRUD routes
+router.post('/', addUser);
+router.get('/', getUsers);
+router.put('/:id', editUser);
+router.patch('/:id/hold', holdUser);
+router.delete('/:id', deleteUser);
 
-export default router;
+module.exports = router;
 

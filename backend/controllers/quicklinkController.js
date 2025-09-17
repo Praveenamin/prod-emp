@@ -1,33 +1,35 @@
 const Quicklink = require('../models/Quicklink');
 
-// Get all quicklinks
-exports.getQuicklinks = async (req, res) => {
+// Add Quicklink
+const addQuicklink = async (req, res) => {
   try {
-    const links = await Quicklink.find().sort({ createdAt: -1 });
+    const quicklink = new Quicklink(req.body);
+    await quicklink.save();
+    res.status(201).json(quicklink);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all Quicklinks
+const getQuicklinks = async (req, res) => {
+  try {
+    const links = await Quicklink.find();
     res.json(links);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Add new quicklink
-exports.addQuicklink = async (req, res) => {
-  try {
-    const link = new Quicklink(req.body);
-    await link.save();
-    res.status(201).json(link);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-// Delete quicklink
-exports.deleteQuicklink = async (req, res) => {
+// Delete Quicklink
+const deleteQuicklink = async (req, res) => {
   try {
     await Quicklink.findByIdAndDelete(req.params.id);
     res.json({ message: 'Quicklink deleted' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
+
+module.exports = { addQuicklink, getQuicklinks, deleteQuicklink };
 

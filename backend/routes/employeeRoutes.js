@@ -1,17 +1,10 @@
-// routes/employeeRoutes.js
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const ctrl = require("../controllers/employeeController");
+const { addEmployeeAssets, getEmployeeAssets, requestHardwareChange } = require('../controllers/employeeController');
 
-// list & create
-router.get("/", ctrl.getAll);
-router.post("/", ctrl.create);
-
-// single employee ops
-router.get("/:id", ctrl.getOne);
-router.put("/:id", ctrl.update);
-router.patch("/:id/hold", ctrl.toggleHold);
-router.delete("/:id", ctrl.remove);
+router.post('/', addEmployeeAssets);
+router.get('/', getEmployeeAssets);
+router.post('/:id/request', requestHardwareChange);
 
 module.exports = router;
 

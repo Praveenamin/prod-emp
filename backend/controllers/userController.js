@@ -1,68 +1,56 @@
-import User from "../models/User.js";
-import bcrypt from "bcryptjs";
+const User = require('../models/User');
 
 // Add User
-export const addUser = async (req, res) => {
+const addUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, designation, phone, altPhone, role } = req.body;
-
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      firstName, lastName, email,
-      password: hashedPassword,
-      designation, phone, altPhone, role
-    });
-
+    const { name, email, password, designation, phone, altPhone, role } = req.body;
+    const user = new User({ name, email, password, designation, phone, altPhone, role });
+    await user.save();
     res.status(201).json(user);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all users
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
 // Edit User
-export const editUser = async (req, res) => {
+const editUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const update = req.body;
-
-    if (update.password) {
-      update.password = await bcrypt.hash(update.password, 10);
-    }
-
-    const user = await User.findByIdAndUpdate(id, update, { new: true });
-    res.json(user);
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedUser);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Hold/Unhold User
-export const toggleHoldUser = async (req, res) => {
+// Hold User
+const holdUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await User.findById(id);
-
-    user.status = user.status === "Active" ? "Hold" : "Active";
-    await user.save();
-
+    const user = await User.findByIdAndUpdate(req.params.id, { status: 'on-hold' }, { new: true });
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
 // Delete User
-export const deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    await User.findByIdAndDelete(id);
-    res.json({ message: "User deleted" });
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: 'User deleted' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
+
+module.exports = { addUser, getUsers, editUser, holdUser, deleteUser };
 
