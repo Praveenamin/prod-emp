@@ -1,12 +1,7 @@
-# Use official Node.js image
 FROM node:18
-
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm install
-
 COPY . .
-
-EXPOSE 5005
-CMD ["npm", "start"]
+EXPOSE 3338
+CMD ["node", "server.js"]

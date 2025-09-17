@@ -1,31 +1,34 @@
-version: "3.8"
-
+version: '3.8'
 services:
   mongo:
-    image: mongo:5
+    image: mongo:6
     container_name: employee_mongo
+    restart: always
+    ports:
+      - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo-data:/data/db
 
   backend:
     build: ./backend
     container_name: employee_backend
+    restart: always
     ports:
-      - "3338:5000"   # host:container
-    environment:
-      - PORT=5000
-      - MONGO_URI=mongodb://mongo:27017/employeeDB
+      - "3338:3338"
     depends_on:
       - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/employee-portal
 
   frontend:
     build: ./frontend
     container_name: employee_frontend
+    restart: always
     ports:
-      - "5005:80"   # host:container
+      - "5005:5005"
     depends_on:
       - backend
 
 volumes:
-  mongo_data:
+  mongo-data:
 
