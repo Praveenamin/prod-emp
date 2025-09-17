@@ -1,38 +1,31 @@
-name: Deploy Employee Portal
+name: Deploy to Server
 
 on:
   push:
     branches:
-      - master   # Runs only when code is pushed to master
+      - master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Install SSH client
-      - name: Install SSH client
-        run: sudo apt-get update && sudo apt-get install -y openssh-client
-
-      # Step 3: Add private key & configure SSH
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "${{ secrets.DEPLOY_HOST }} ssh-rsa ${{ secrets.SSH_HOST_KEY }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      # Step 4: Deploy to server
-      - name: Deploy via SSH
+      - name: Deploy with SSH
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
-            cd /home/container/employee-portal &&
-            git pull origin master &&
-            docker-compose down -v --rmi all --remove-orphans &&
+          ssh -i ~/.ssh/id_rsa ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+            cd /home/container/employee-portal
+            git pull origin master
+            docker-compose down -v --rmi all --remove-orphans
             docker-compose up -d --build
-          "
+          EOF
 
