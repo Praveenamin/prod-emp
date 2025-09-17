@@ -1,16 +1,17 @@
-# Stage 1: Build
 FROM node:18
 
 WORKDIR /app
 
+# Copy package.json and package-lock.json first
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
+# Copy the rest of the app
 COPY . .
 
-# Expose backend port
 EXPOSE 3338
 
-# Start backend
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
 

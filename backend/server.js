@@ -1,43 +1,35 @@
-// server.js
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
-const userRoutes = require('./routes/userRoutes');
-const employeeRoutes = require('./routes/employeeRoutes');
-const announcementRoutes = require('./routes/announcementRoutes');
-const quicklinkRoutes = require('./routes/quicklinkRoutes');
+const userRoutes = require("./routes/userRoutes");
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3338;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/users', userRoutes);
-app.use('/api/employees', employeeRoutes);
-app.use('/api/announcements', announcementRoutes);
-app.use('/api/quicklinks', quicklinkRoutes);
+app.use("/api/users", userRoutes);
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
+const PORT = process.env.PORT || 3338;
+const MONGO_URI = process.env.MONGO_URI || "mongodb://employee_mongo:27017/employee_portal";
 
-// Root endpoint
-app.get('/', (req, res) => {
-    res.send('Employee Portal Backend Running');
-});
-
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// DB connection
+mongoose
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
