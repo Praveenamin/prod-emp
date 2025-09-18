@@ -1,202 +1,99 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../services/api';
-import { Dialog } from '@headlessui/react';
-import { TrashIcon, PencilIcon, PlusIcon } from 'lucide-react';
+import api from '../services/api';
+import Modal from './common/Modal';
 
-const ITAssetManagement = () => {
+export default function ITAssetManagement() {
   const [assets, setAssets] = useState([]);
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    employeeId: '',
-    laptopDesktop: false,
-    serialNumber: '',
-    speaker: false,
-    headphone: false,
-    monitor: false,
-    keyboard: false,
-    mouse: false,
-    networkIP: '',
-    requestChange: ''
+  const [form, setForm] = useState({
+    employeeId: '', laptopDesktop: false, serialNumber: '', speaker:false, headphone:false, monitor:false, keyboard:false, mouse:false, networkIP:'', requestChange:''
   });
+  const [editingId, setEditingId] = useState(null);
 
-  // Fetch assets
-  const fetchAssets = async () => {
+  const fetch = async () => {
     try {
-      const res = await axios.get('/it-assets');
+      const res = await api.get('/it-assets');
       setAssets(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  useEffect(() => {
-    fetchAssets();
-  }, []);
+  useEffect(()=>{ fetch(); }, []);
 
-  // Add or update asset
-  const handleSubmit = async (e) => {
+  const openNew = ()=>{ setEditingId(null); setForm({ employeeId:'', laptopDesktop:false, serialNumber:'', speaker:false, headphone:false, monitor:false, keyboard:false, mouse:false, networkIP:'', requestChange:'' }); setOpen(true); }
+
+  const submit = async (e) => {
     e.preventDefault();
     try {
-      if (formData._id) {
-        await axios.put(`/it-assets/${formData._id}`, formData);
-      } else {
-        await axios.post('/it-assets', formData);
-      }
-      setOpen(false);
-      setFormData({
-        employeeId: '',
-        laptopDesktop: false,
-        serialNumber: '',
-        speaker: false,
-        headphone: false,
-        monitor: false,
-        keyboard: false,
-        mouse: false,
-        networkIP: '',
-        requestChange: ''
-      });
-      fetchAssets();
-    } catch (err) {
-      console.error(err);
-    }
+      if (editingId) await api.put(`/it-assets/${editingId}`, form);
+      else await api.post('/it-assets', form);
+      setOpen(false); fetch();
+    } catch (err) { console.error(err); }
   };
 
-  // Delete asset
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this asset?')) {
-      await axios.delete(`/it-assets/${id}`);
-      fetchAssets();
-    }
-  };
+  const edit = (a) => { setEditingId(a._id); setForm(a); setOpen(true); };
 
-  // Edit asset
-  const handleEdit = (asset) => {
-    setFormData(asset);
-    setOpen(true);
-  };
+  const remove = async (id) => { if(!confirm('Delete asset?')) return; await api.delete(`/it-assets/${id}`); fetch(); };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">IT Asset Management</h2>
-      <button
-        onClick={() => setOpen(true)}
-        className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
-      >
-        <PlusIcon size={16} /> Add Asset
-      </button>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">IT Asset Management</h2>
+        <button onClick={openNew} className="px-4 py-2 bg-brand-500 text-white rounded">Add Asset</button>
+      </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border rounded-lg shadow">
-          <thead className="bg-gray-100">
+      <div className="bg-white rounded-lg shadow overflow-auto">
+        <table className="min-w-full text-left">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="p-2 border">Employee</th>
-              <th className="p-2 border">Laptop/Desktop</th>
-              <th className="p-2 border">Serial Number</th>
-              <th className="p-2 border">Speaker</th>
-              <th className="p-2 border">Headphone</th>
-              <th className="p-2 border">Monitor</th>
-              <th className="p-2 border">Keyboard</th>
-              <th className="p-2 border">Mouse</th>
-              <th className="p-2 border">Network IP</th>
-              <th className="p-2 border">Requests</th>
-              <th className="p-2 border">Actions</th>
+              <th className="p-3">Employee</th>
+              <th className="p-3">Laptop/Desktop</th>
+              <th className="p-3">Serial</th>
+              <th className="p-3">Accessories</th>
+              <th className="p-3">Network IP</th>
+              <th className="p-3">Requests</th>
+              <th className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {assets.map((asset) => (
-              <tr key={asset._id} className="text-center border-b hover:bg-gray-50">
-                <td className="p-2 border">{asset.employeeId?.firstName} {asset.employeeId?.lastName}</td>
-                <td className="p-2 border">{asset.laptopDesktop ? '✅' : '❌'}</td>
-                <td className="p-2 border">{asset.serialNumber}</td>
-                <td className="p-2 border">{asset.speaker ? '✅' : '❌'}</td>
-                <td className="p-2 border">{asset.headphone ? '✅' : '❌'}</td>
-                <td className="p-2 border">{asset.monitor ? '✅' : '❌'}</td>
-                <td className="p-2 border">{asset.keyboard ? '✅' : '❌'}</td>
-                <td className="p-2 border">{asset.mouse ? '✅' : '❌'}</td>
-                <td className="p-2 border">{asset.networkIP}</td>
-                <td className="p-2 border">{asset.requestChange}</td>
-                <td className="p-2 border flex justify-center gap-2">
-                  <button onClick={() => handleEdit(asset)} className="text-yellow-600 hover:text-yellow-800">
-                    <PencilIcon size={16} />
-                  </button>
-                  <button onClick={() => handleDelete(asset._id)} className="text-red-600 hover:text-red-800">
-                    <TrashIcon size={16} />
-                  </button>
+            {assets.map(a => (
+              <tr key={a._id} className="border-t hover:bg-gray-50">
+                <td className="p-3">{a.employeeId?.firstName || a.employeeId || '—'}</td>
+                <td className="p-3">{a.laptopDesktop ? 'Yes' : 'No'}</td>
+                <td className="p-3">{a.serialNumber}</td>
+                <td className="p-3">{[a.speaker && 'Speaker', a.headphone && 'Headphone', a.monitor && 'Monitor', a.keyboard && 'Keyboard', a.mouse && 'Mouse'].filter(Boolean).join(', ')}</td>
+                <td className="p-3">{a.networkIP}</td>
+                <td className="p-3">{a.requestChange}</td>
+                <td className="p-3">
+                  <div className="flex gap-2">
+                    <button onClick={()=>edit(a)} className="text-yellow-600">Edit</button>
+                    <button onClick={()=>remove(a._id)} className="text-red-600">Delete</button>
+                  </div>
                 </td>
               </tr>
             ))}
+            {assets.length === 0 && <tr><td colSpan="7" className="p-6 text-center text-gray-400">No assets</td></tr>}
           </tbody>
         </table>
       </div>
 
-      {/* Modal */}
-      <Dialog open={open} onClose={() => setOpen(false)} className="fixed z-10 inset-0 overflow-y-auto">
-        <div className="flex items-center justify-center min-h-screen px-4">
-          <Dialog.Panel className="bg-white rounded-lg max-w-lg w-full p-6 shadow-lg">
-            <Dialog.Title className="text-xl font-bold mb-4">
-              {formData._id ? 'Edit Asset' : 'Add Asset'}
-            </Dialog.Title>
-            <form onSubmit={handleSubmit} className="space-y-2">
-              <input
-                type="text"
-                placeholder="Employee ID"
-                className="w-full border rounded px-2 py-1"
-                value={formData.employeeId}
-                onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Serial Number"
-                className="w-full border rounded px-2 py-1"
-                value={formData.serialNumber}
-                onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Network IP"
-                className="w-full border rounded px-2 py-1"
-                value={formData.networkIP}
-                onChange={(e) => setFormData({ ...formData, networkIP: e.target.value })}
-                required
-              />
-
-              <div className="flex flex-wrap gap-2">
-                {['laptopDesktop', 'speaker', 'headphone', 'monitor', 'keyboard', 'mouse'].map((key) => (
-                  <label key={key} className="flex items-center gap-1">
-                    <input
-                      type="checkbox"
-                      checked={formData[key]}
-                      onChange={(e) => setFormData({ ...formData, [key]: e.target.checked })}
-                    />
-                    {key}
-                  </label>
-                ))}
-              </div>
-
-              <textarea
-                placeholder="Request Change"
-                className="w-full border rounded px-2 py-1"
-                value={formData.requestChange}
-                onChange={(e) => setFormData({ ...formData, requestChange: e.target.value })}
-              />
-
-              <div className="flex justify-end gap-2 mt-2">
-                <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                  {formData._id ? 'Update' : 'Add'}
-                </button>
-              </div>
-            </form>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
+      <Modal isOpen={open} setIsOpen={setOpen} title={editingId ? 'Edit Asset' : 'Add Asset'}>
+        <form onSubmit={submit} className="space-y-3">
+          <input placeholder="Employee ID (user id)" value={form.employeeId} onChange={e=>setForm({...form, employeeId:e.target.value})} className="w-full border rounded px-2 py-1" />
+          <input placeholder="Serial number" required value={form.serialNumber} onChange={e=>setForm({...form, serialNumber:e.target.value})} className="w-full border rounded px-2 py-1" />
+          <input placeholder="Network IP" value={form.networkIP} onChange={e=>setForm({...form, networkIP:e.target.value})} className="w-full border rounded px-2 py-1" />
+          <div className="flex flex-wrap gap-3">
+            {['laptopDesktop','speaker','headphone','monitor','keyboard','mouse'].map(k => (
+              <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={!!form[k]} onChange={e=>setForm({...form, [k]: e.target.checked})} />{k}</label>
+            ))}
+          </div>
+          <textarea placeholder="Request change" value={form.requestChange} onChange={e=>setForm({...form, requestChange:e.target.value})} className="w-full border rounded px-2 py-1" />
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={()=>setOpen(false)} className="px-3 py-2 bg-gray-200 rounded">Cancel</button>
+            <button type="submit" className="px-3 py-2 bg-brand-500 text-white rounded">Save</button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
-};
-
-export default ITAssetManagement;
+}
 

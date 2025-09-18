@@ -1,104 +1,142 @@
-import React, { useState, useEffect } from "react";
-import API from "../services/api";
+import React, { useEffect, useState } from 'react';
+import api from '../services/api';
+import Modal from './common/Modal';
 
-function UserManagement() {
+function EmptyRow() {
+  return <div className="text-center p-6 text-gray-400">No users found</div>;
+}
+
+export default function UserManagement() {
   const [users, setUsers] = useState([]);
+  const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    designation: "",
-    phone: "",
-    altPhone: "",
-    role: "Employee",
+    firstName: '', lastName: '', email: '', password: '', designation: '', phoneNumber: '', alternativeNumber: '', role: 'Employee'
   });
-
-  // Fetch users
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const [editingId, setEditingId] = useState(null);
 
   const fetchUsers = async () => {
-    const res = await API.get("/users");
-    setUsers(res.data);
+    try {
+      const res = await api.get('/users');
+      setUsers(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => { fetchUsers(); }, []);
+
+  const openNew = () => {
+    setEditingId(null);
+    setForm({ firstName: '', lastName: '', email: '', password: '', designation: '', phoneNumber: '', alternativeNumber: '', role: 'Employee' });
+    setOpen(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await API.post("/users", form);
-    fetchUsers();
+    try {
+      if (editingId) {
+        await api.put(`/users/${editingId}`, form);
+      } else {
+        await api.post('/users', form);
+      }
+      setOpen(false);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEdit = (user) => {
+    setEditingId(user._id);
     setForm({
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      designation: "",
-      phone: "",
-      altPhone: "",
-      role: "Employee",
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      password: '',
+      designation: user.designation || '',
+      phoneNumber: user.phoneNumber || '',
+      alternativeNumber: user.alternativeNumber || '',
+      role: user.role || 'Employee'
     });
+    setOpen(true);
+  };
+
+  const handleHold = async (id) => {
+    if (!confirm('Hold this user?')) return;
+    await api.patch(`/users/hold/${id}`);
+    fetchUsers();
   };
 
   const handleDelete = async (id) => {
-    await API.delete(`/users/${id}`);
-    fetchUsers();
-  };
-
-  const toggleHold = async (id) => {
-    await API.patch(`/users/${id}/hold`);
+    if (!confirm('Delete this user?')) return;
+    await api.delete(`/users/${id}`);
     fetchUsers();
   };
 
   return (
     <div>
-      <h2>User Management</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">User Management</h2>
+        <div>
+          <button onClick={openNew} className="px-4 py-2 bg-brand-500 text-white rounded">Add User</button>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-        <input placeholder="First Name" name="firstName" value={form.firstName} onChange={handleChange} required />
-        <input placeholder="Last Name" name="lastName" value={form.lastName} onChange={handleChange} required />
-        <input placeholder="Email" name="email" value={form.email} onChange={handleChange} required />
-        <input type="password" placeholder="Password" name="password" value={form.password} onChange={handleChange} required />
-        <input placeholder="Designation" name="designation" value={form.designation} onChange={handleChange} />
-        <input placeholder="Phone" name="phone" value={form.phone} onChange={handleChange} />
-        <input placeholder="Alternative Phone" name="altPhone" value={form.altPhone} onChange={handleChange} />
-        <select name="role" value={form.role} onChange={handleChange}>
-          <option value="Employee">Employee</option>
-          <option value="Admin">Admin</option>
-        </select>
-        <button type="submit">Add User</button>
-      </form>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="grid grid-cols-7 gap-2 p-3 text-xs font-semibold text-gray-500 border-b">
+          <div>Employee</div>
+          <div>Email</div>
+          <div>Designation</div>
+          <div>Phone</div>
+          <div>Role</div>
+          <div>Status</div>
+          <div>Actions</div>
+        </div>
 
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u._id}>
-              <td>{u.firstName} {u.lastName}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td>{u.status}</td>
-              <td>
-                <button onClick={() => toggleHold(u._id)}>
-                  {u.status === "Active" ? "Hold" : "Unhold"}
-                </button>
-                <button onClick={() => handleDelete(u._id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        {users.length === 0 ? <EmptyRow/> : users.map(u => (
+          <div key={u._id} className="grid grid-cols-7 gap-2 p-3 items-center border-b hover:bg-gray-50">
+            <div>{u.firstName} {u.lastName}</div>
+            <div>{u.email}</div>
+            <div>{u.designation}</div>
+            <div>{u.phoneNumber}</div>
+            <div>{u.role}</div>
+            <div>{u.status || 'Active'}</div>
+            <div className="flex gap-2">
+              <button onClick={() => handleEdit(u)} className="text-yellow-600 hover:text-yellow-800">Edit</button>
+              <button onClick={() => handleHold(u._id)} className="text-indigo-600">Hold</button>
+              <button onClick={() => handleDelete(u._id)} className="text-red-600">Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Modal isOpen={open} setIsOpen={setOpen} title={editingId ? 'Edit User' : 'Add User'}>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <input required placeholder="First name" value={form.firstName} onChange={e=>setForm({...form, firstName:e.target.value})} className="border rounded px-2 py-1" />
+            <input required placeholder="Last name" value={form.lastName} onChange={e=>setForm({...form, lastName:e.target.value})} className="border rounded px-2 py-1" />
+          </div>
+          <input required placeholder="Email" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} className="w-full border rounded px-2 py-1" />
+          <input placeholder="Password" type="password" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} className="w-full border rounded px-2 py-1" />
+          <div className="grid grid-cols-2 gap-2">
+            <input placeholder="Designation" value={form.designation} onChange={e=>setForm({...form, designation:e.target.value})} className="border rounded px-2 py-1" />
+            <input placeholder="Phone" value={form.phoneNumber} onChange={e=>setForm({...form, phoneNumber:e.target.value})} className="border rounded px-2 py-1" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input placeholder="Alternative number" value={form.alternativeNumber} onChange={e=>setForm({...form, alternativeNumber:e.target.value})} className="border rounded px-2 py-1" />
+            <select value={form.role} onChange={e=>setForm({...form, role:e.target.value})} className="border rounded px-2 py-1">
+              <option>Employee</option>
+              <option>Admin</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={()=>setOpen(false)} className="px-3 py-2 bg-gray-200 rounded">Cancel</button>
+            <button type="submit" className="px-3 py-2 bg-brand-500 text-white rounded">Save</button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
-
-export default UserManagement;
 

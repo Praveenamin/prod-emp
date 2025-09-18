@@ -1,9 +1,8 @@
-import axios from "axios";
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: "http://localhost:3338", 
-  // If accessing from outside the server, replace with:
-  // baseURL: "http://23.82.14.235:3338"
+  baseURL: '/api', // nginx proxies /api to backend
+  timeout: 10000
 });
 
 export default api;

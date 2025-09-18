@@ -1,13 +1,8 @@
-import React from "react";
-import UserManagement from "./components/UserManagement";
+import React from 'react';
+import AdminDashboard from './components/AdminDashboard';
 
 function App() {
-  return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>Admin Dashboard</h1>
-      <UserManagement />
-    </div>
-  );
+  return <AdminDashboard />;
 }
 
 export default App;
