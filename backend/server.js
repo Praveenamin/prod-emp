@@ -1,35 +1,37 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
 const cors = require("cors");
-
-const userRoutes = require("./routes/userRoutes");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
 // Routes
+const userRoutes = require("./routes/userRoutes");
 app.use("/api/users", userRoutes);
 
-const PORT = process.env.PORT || 3338;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://employee_mongo:27017/employee_portal";
-
-// DB connection
+// DB connect
 mongoose
-  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => {
-    console.log("MongoDB connected");
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch((err) => console.error("❌ MongoDB Error:", err));
+const initAdmin = require("./initAdmin");
+
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(async () => {
+    console.log("✅ MongoDB Connected");
+    await initAdmin(); // ensure default admin exists
   })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
-  });
+  .catch((err) => console.error("❌ MongoDB Error:", err));
+
+const authRoutes = require("./routes/authRoutes");
+app.use("/api/auth", authRoutes);
+
+// Start server
+const PORT = process.env.PORT || 3338;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
