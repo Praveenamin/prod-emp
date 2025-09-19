@@ -31,6 +31,9 @@ mongoose
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
+const assetRoutes = require("./routes/assetRoutes");
+app.use("/api/assets", assetRoutes);
+
 // Start server
 const PORT = process.env.PORT || 3338;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
