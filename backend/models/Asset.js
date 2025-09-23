@@ -1,19 +1,40 @@
 const mongoose = require("mongoose");
 
-const assetSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // link to employee
-  deviceType: { type: String, enum: ["Laptop", "Desktop"], required: true },
-  serialNumber: { type: String, required: true },
-  peripherals: {
-    speaker: { type: Boolean, default: false },
-    headphone: { type: Boolean, default: false },
-    monitor: { type: Boolean, default: false },
-    keyboard: { type: Boolean, default: false },
-    mouse: { type: Boolean, default: false }
+const assetSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["Laptop", "Desktop"],
+      required: true,
+    },
+    serialNumber: { type: String, required: true, unique: true },
+    peripherals: {
+      speaker: { type: Boolean, default: false },
+      headphone: { type: Boolean, default: false },
+      monitor: { type: Boolean, default: false },
+      keyboard: { type: Boolean, default: false },
+      mouse: { type: Boolean, default: false },
+    },
+    networkIP: { type: String },
+    status: {
+      type: String,
+      enum: ["Active", "On-Hold", "Returned"],
+      default: "Active",
+    },
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    changeRequests: [
+      {
+        request: String,
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
-  networkIP: { type: String },
-  changeRequests: [{ type: String }] // stores user requests for hardware changes
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 module.exports = mongoose.model("Asset", assetSchema);
 

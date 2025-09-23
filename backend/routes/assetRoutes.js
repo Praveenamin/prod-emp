@@ -1,13 +1,16 @@
 const express = require("express");
-const { createAsset, getAssets, updateAsset, deleteAsset, addChangeRequest } = require("../controllers/assetController");
-
 const router = express.Router();
+const assetController = require("../controllers/assetController");
+const auth = require("../middleware/authMiddleware"); // token protection
 
-router.post("/", createAsset);
-router.get("/", getAssets);
-router.put("/:id", updateAsset);
-router.delete("/:id", deleteAsset);
-router.post("/:id/change-request", addChangeRequest);
+// CRUD
+router.post("/", auth, assetController.createAsset);
+router.get("/", auth, assetController.getAssets);
+router.put("/:id", auth, assetController.updateAsset);
+router.delete("/:id", auth, assetController.deleteAsset);
+
+// Change request
+router.post("/:id/change-request", auth, assetController.addChangeRequest);
 
 module.exports = router;
 

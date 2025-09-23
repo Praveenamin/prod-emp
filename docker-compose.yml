@@ -8,7 +8,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db   # 👈 Use the existing dash version
+      - mongo_data:/data/db
 
   employee_backend:
     build:
@@ -19,7 +19,11 @@ services:
     ports:
       - "3338:3338"
     env_file:
-      - .env
+      - .env  # ✅ still loads variables
+    volumes:
+      - ./backend:/app        # sync backend code
+      - /app/node_modules     # ✅ mount .env inside container
+        
     depends_on:
       - employee_mongo
 
@@ -35,5 +39,5 @@ services:
       - employee_backend
 
 volumes:
-  mongo-data:   # 👈 ensure this matches your real volume
+  mongo_data:
 

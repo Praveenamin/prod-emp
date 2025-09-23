@@ -1,14 +1,17 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const userController = require("../controllers/userController");
+const userController = require('../controllers/userController');
+const { authMiddleware, adminOnly } = require('../middleware/authMiddleware');
 
-// Routes
-router.get("/", userController.getUsers);
-router.post("/", userController.addUser);
-router.put("/:id", userController.updateUser);
-router.patch("/hold/:id", userController.holdUser);
-router.patch("/activate/:id", userController.activateUser);
-router.delete("/:id", userController.deleteUser);
+// All user routes require login
+router.use(authMiddleware);
+
+// Only admins can manage users
+router.get('/', adminOnly, userController.getAllUsers);
+router.post('/', adminOnly, userController.createUser);
+router.put('/:id', adminOnly, userController.updateUser);
+router.delete('/:id', adminOnly, userController.deleteUser);
+router.patch('/hold/:id', adminOnly, userController.holdUser);
 
 module.exports = router;
 
