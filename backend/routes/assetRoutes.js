@@ -1,17 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const assetCtrl = require("../controllers/assetController");
-const authMiddleware = require("../middleware/authMiddleware");
+const {
+  createAsset,
+  getAssets,
+  updateAsset,
+  deleteAsset,
+} = require("../controllers/assetController");
 
-// All routes require authentication
-router.post("/", authMiddleware, assetCtrl.createAsset);
-router.get("/", authMiddleware, assetCtrl.getAssets);
-router.put("/:id", authMiddleware, assetCtrl.updateAsset);
-router.delete("/:id", authMiddleware, assetCtrl.deleteAsset);
-
-// Extra routes
-router.patch("/:id/request-change", authMiddleware, assetCtrl.requestChange);
-router.patch("/:id/approve-change", authMiddleware, assetCtrl.approveChange);
+// Routes
+router.post("/", createAsset);
+router.get("/", getAssets);
+router.put("/:id", updateAsset);
+router.delete("/:id", deleteAsset);
 
 module.exports = router;
 
