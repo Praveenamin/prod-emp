@@ -35,3 +35,7 @@ mongoose.connect(MONGO_URI, {
 const PORT = process.env.PORT || 3338;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
 
+const assetRoutes = require("./routes/assetRoutes");
+app.use("/api/assets", assetRoutes);
+
+

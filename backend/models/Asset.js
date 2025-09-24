@@ -2,12 +2,18 @@ const mongoose = require("mongoose");
 
 const assetSchema = new mongoose.Schema(
   {
-    type: {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    deviceType: {
       type: String,
       enum: ["Laptop", "Desktop"],
       required: true,
     },
     serialNumber: { type: String, required: true, unique: true },
+
     peripherals: {
       speaker: { type: Boolean, default: false },
       headphone: { type: Boolean, default: false },
@@ -15,23 +21,14 @@ const assetSchema = new mongoose.Schema(
       keyboard: { type: Boolean, default: false },
       mouse: { type: Boolean, default: false },
     },
+
     networkIP: { type: String },
+
     status: {
       type: String,
-      enum: ["Active", "On-Hold", "Returned"],
+      enum: ["Active", "ChangeRequested"],
       default: "Active",
     },
-    assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    changeRequests: [
-      {
-        request: String,
-        createdAt: { type: Date, default: Date.now },
-      },
-    ],
   },
   { timestamps: true }
 );
