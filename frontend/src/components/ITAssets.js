@@ -1,208 +1,167 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
 
-function ITAsset() {
+export default function ITAssets() {
   const [assets, setAssets] = useState([]);
+  const [users, setUsers] = useState([]);
   const [form, setForm] = useState({
-    assignedTo: "",
+    user: "",
     deviceType: "Laptop",
     serialNumber: "",
-    peripherals: [],
+    peripherals: { speaker: false, headphone: false, monitor: false, keyboard: false, mouse: false },
     networkIP: "",
   });
   const [editingId, setEditingId] = useState(null);
 
-  // Fetch all assets
-  const fetchAssets = async () => {
-    try {
-      const res = await api.get("/assets");
-      setAssets(res.data);
-    } catch (err) {
-      console.error("❌ Error fetching assets", err);
-    }
+  const fetchData = async () => {
+    const resAssets = await api.get("/assets");
+    const resUsers = await api.get("/users");
+    setAssets(resAssets.data);
+    setUsers(resUsers.data);
   };
 
-  useEffect(() => {
-    fetchAssets();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  // Handle input change
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === "checkbox") {
-      setForm((prev) => {
-        const peripherals = checked
-          ? [...prev.peripherals, value]
-          : prev.peripherals.filter((p) => p !== value);
-        return { ...prev, peripherals };
-      });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Submit form
+  const handlePeripheralChange = (e) => {
+    setForm({
+      ...form,
+      peripherals: { ...form.peripherals, [e.target.name]: e.target.checked },
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      if (editingId) {
-        await api.put(`/assets/${editingId}`, form);
-      } else {
-        await api.post("/assets", form);
-      }
-      setForm({
-        assignedTo: "",
-        deviceType: "Laptop",
-        serialNumber: "",
-        peripherals: [],
-        networkIP: "",
-      });
-      setEditingId(null);
-      fetchAssets();
-    } catch (err) {
-      console.error("❌ Error saving asset", err);
+    if (editingId) {
+      await api.put(`/assets/${editingId}`, form);
+    } else {
+      await api.post("/assets", form);
     }
+    setForm({
+      user: "",
+      deviceType: "Laptop",
+      serialNumber: "",
+      peripherals: { speaker: false, headphone: false, monitor: false, keyboard: false, mouse: false },
+      networkIP: "",
+    });
+    setEditingId(null);
+    fetchData();
   };
 
-  // Edit asset
   const handleEdit = (asset) => {
-    setForm({
-      assignedTo: asset.assignedTo?._id || "",
-      deviceType: asset.deviceType,
-      serialNumber: asset.serialNumber,
-      peripherals: asset.peripherals || [],
-      networkIP: asset.networkIP,
-    });
+    setForm(asset);
     setEditingId(asset._id);
   };
 
-  // Delete asset
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this asset?")) return;
-    try {
-      await api.delete(`/assets/${id}`);
-      fetchAssets();
-    } catch (err) {
-      console.error("❌ Error deleting asset", err);
-    }
+    if (!window.confirm("Delete this asset?")) return;
+    await api.delete(`/assets/${id}`);
+    fetchData();
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
-      <h2 className="text-2xl font-semibold mb-4">IT Asset Management</h2>
+    <div>
+      <h2 className="text-2xl font-bold mb-4">IT Asset Management</h2>
 
       {/* Asset Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow mb-6">
         <select
-          name="assignedTo"
-          value={form.assignedTo}
+          name="user"
+          value={form.user}
           onChange={handleChange}
-          className="w-full p-2 border rounded"
+          className="border rounded p-2 w-full"
           required
         >
-          <option value="">-- Select User --</option>
-          {/* later: map users dynamically */}
-          <option value="USER_ID_1">User One</option>
-          <option value="USER_ID_2">User Two</option>
+          <option value="">Select User</option>
+          {users.map((u) => (
+            <option key={u._id} value={u._id}>
+              {u.firstName} {u.lastName} ({u.email})
+            </option>
+          ))}
         </select>
 
-        <select
-          name="deviceType"
-          value={form.deviceType}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        >
-          <option value="Laptop">Laptop</option>
-          <option value="Desktop">Desktop</option>
-        </select>
-
-        <input
-          type="text"
-          name="serialNumber"
-          value={form.serialNumber}
-          onChange={handleChange}
-          placeholder="Serial Number"
-          className="w-full p-2 border rounded"
-          required
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <select name="deviceType" value={form.deviceType} onChange={handleChange} className="border p-2 rounded">
+            <option>Laptop</option>
+            <option>Desktop</option>
+          </select>
+          <input
+            name="serialNumber"
+            placeholder="Serial Number"
+            value={form.serialNumber}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            required
+          />
+        </div>
 
         {/* Peripherals */}
         <div className="flex gap-4">
-          {["Speaker", "Headphone", "Monitor", "Keyboard", "Mouse"].map((item) => (
-            <label key={item} className="flex items-center gap-1">
+          {["speaker", "headphone", "monitor", "keyboard", "mouse"].map((p) => (
+            <label key={p} className="flex items-center gap-1">
               <input
                 type="checkbox"
-                value={item}
-                checked={form.peripherals.includes(item)}
-                onChange={handleChange}
+                name={p}
+                checked={form.peripherals[p]}
+                onChange={handlePeripheralChange}
               />
-              {item}
+              {p}
             </label>
           ))}
         </div>
 
         <input
-          type="text"
           name="networkIP"
+          placeholder="Network IP"
           value={form.networkIP}
           onChange={handleChange}
-          placeholder="Network IP"
-          className="w-full p-2 border rounded"
+          className="border p-2 rounded w-full"
         />
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
           {editingId ? "Update Asset" : "Add Asset"}
         </button>
       </form>
 
-      {/* Assets Table */}
-      <table className="w-full border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">User</th>
-            <th className="border p-2">Device</th>
-            <th className="border p-2">Serial</th>
-            <th className="border p-2">Peripherals</th>
-            <th className="border p-2">Network IP</th>
-            <th className="border p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {assets.map((asset) => (
-            <tr key={asset._id}>
-              <td className="border p-2">
-                {asset.assignedTo
-                  ? `${asset.assignedTo.firstName} ${asset.assignedTo.lastName}`
-                  : "Unassigned"}
-              </td>
-              <td className="border p-2">{asset.deviceType}</td>
-              <td className="border p-2">{asset.serialNumber}</td>
-              <td className="border p-2">{asset.peripherals.join(", ")}</td>
-              <td className="border p-2">{asset.networkIP}</td>
-              <td className="border p-2 flex gap-2">
-                <button
-                  onClick={() => handleEdit(asset)}
-                  className="bg-yellow-500 text-white px-2 py-1 rounded"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(asset._id)}
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
+      {/* Asset List */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-gray-100 text-sm">
+              <th className="p-2">User</th>
+              <th className="p-2">Device</th>
+              <th className="p-2">Serial</th>
+              <th className="p-2">Peripherals</th>
+              <th className="p-2">Network IP</th>
+              <th className="p-2">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {assets.map((a) => (
+              <tr key={a._id} className="border-t">
+                <td className="p-2">{a.user?.firstName} {a.user?.lastName}</td>
+                <td className="p-2">{a.deviceType}</td>
+                <td className="p-2">{a.serialNumber}</td>
+                <td className="p-2">
+                  {Object.entries(a.peripherals)
+                    .filter(([k, v]) => v)
+                    .map(([k]) => k)
+                    .join(", ")}
+                </td>
+                <td className="p-2">{a.networkIP}</td>
+                <td className="p-2 flex gap-2">
+                  <button onClick={() => handleEdit(a)} className="text-blue-600">Edit</button>
+                  <button onClick={() => handleDelete(a._id)} className="text-red-600">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
-
-export default ITAsset;
 
