@@ -20,7 +20,8 @@ app.get("/", (req, res) => res.send("OK"));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/assets", assetRoutes);   // ✅ only once
-
+app.use("/api/announcements", announcementRoutes);
+app.use("/api/quicklinks", quickLinkRoutes);
 // DB connect
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
@@ -30,3 +31,5 @@ mongoose.connect(process.env.MONGO_URI)
 const PORT = process.env.PORT || 3338;
 app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
 
+const announcementRoutes = require("./routes/announcementRoutes");
+const quickLinkRoutes = require("./routes/quickLinkRoutes");

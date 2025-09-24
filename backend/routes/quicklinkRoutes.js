@@ -1,10 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const { addQuicklink, getQuicklinks, deleteQuicklink } = require('../controllers/quicklinkController');
+const express = require("express");
+const { createQuickLink, getQuickLinks, deleteQuickLink } = require("../controllers/quickLinkController");
+const authMiddleware = require("../middleware/authMiddleware");
 
-router.post('/', addQuicklink);
-router.get('/', getQuicklinks);
-router.delete('/:id', deleteQuicklink);
+const router = express.Router();
+
+router.post("/", authMiddleware, createQuickLink);
+router.get("/", authMiddleware, getQuickLinks);
+router.delete("/:id", authMiddleware, deleteQuickLink);
 
 module.exports = router;
 
