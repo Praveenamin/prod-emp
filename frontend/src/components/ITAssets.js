@@ -1,138 +1,208 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 
-export default function ITAssets() {
+function ITAsset() {
   const [assets, setAssets] = useState([]);
-  const [users, setUsers] = useState([]);
   const [form, setForm] = useState({
-    user: "",
+    assignedTo: "",
     deviceType: "Laptop",
     serialNumber: "",
-    peripherals: {
-      speaker: false,
-      headphone: false,
-      monitor: false,
-      keyboard: false,
-      mouse: false,
-    },
+    peripherals: [],
     networkIP: "",
   });
+  const [editingId, setEditingId] = useState(null);
 
-  const fetchData = async () => {
-    const [assetRes, userRes] = await Promise.all([
-      api.get("/assets"),
-      api.get("/users"),
-    ]);
-    setAssets(assetRes.data);
-    setUsers(userRes.data);
+  // Fetch all assets
+  const fetchAssets = async () => {
+    try {
+      const res = await api.get("/assets");
+      setAssets(res.data);
+    } catch (err) {
+      console.error("❌ Error fetching assets", err);
+    }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchAssets();
   }, []);
 
+  // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (form.peripherals.hasOwnProperty(name)) {
-      setForm({ ...form, peripherals: { ...form.peripherals, [name]: checked } });
+    if (type === "checkbox") {
+      setForm((prev) => {
+        const peripherals = checked
+          ? [...prev.peripherals, value]
+          : prev.peripherals.filter((p) => p !== value);
+        return { ...prev, peripherals };
+      });
     } else {
       setForm({ ...form, [name]: value });
     }
   };
 
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await api.post("/assets", form);
+    try {
+      if (editingId) {
+        await api.put(`/assets/${editingId}`, form);
+      } else {
+        await api.post("/assets", form);
+      }
+      setForm({
+        assignedTo: "",
+        deviceType: "Laptop",
+        serialNumber: "",
+        peripherals: [],
+        networkIP: "",
+      });
+      setEditingId(null);
+      fetchAssets();
+    } catch (err) {
+      console.error("❌ Error saving asset", err);
+    }
+  };
+
+  // Edit asset
+  const handleEdit = (asset) => {
     setForm({
-      user: "",
-      deviceType: "Laptop",
-      serialNumber: "",
-      peripherals: { speaker: false, headphone: false, monitor: false, keyboard: false, mouse: false },
-      networkIP: "",
+      assignedTo: asset.assignedTo?._id || "",
+      deviceType: asset.deviceType,
+      serialNumber: asset.serialNumber,
+      peripherals: asset.peripherals || [],
+      networkIP: asset.networkIP,
     });
-    fetchData();
+    setEditingId(asset._id);
   };
 
+  // Delete asset
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this asset?")) return;
-    await api.delete(`/assets/${id}`);
-    fetchData();
-  };
-
-  const handleApprove = async (id) => {
-    await api.patch(`/assets/${id}/approve-change`);
-    fetchData();
+    if (!window.confirm("Are you sure you want to delete this asset?")) return;
+    try {
+      await api.delete(`/assets/${id}`);
+      fetchAssets();
+    } catch (err) {
+      console.error("❌ Error deleting asset", err);
+    }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">IT Asset Management</h2>
+    <div className="p-6 bg-white rounded-lg shadow">
+      <h2 className="text-2xl font-semibold mb-4">IT Asset Management</h2>
 
       {/* Asset Form */}
-      <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow mb-6 space-y-3">
-        <select name="user" value={form.user} onChange={handleChange} required className="w-full border p-2 rounded">
-          <option value="">Select Employee</option>
-          {users.map((u) => (
-            <option key={u._id} value={u._id}>
-              {u.firstName} {u.lastName} ({u.email})
-            </option>
-          ))}
+      <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+        <select
+          name="assignedTo"
+          value={form.assignedTo}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+          required
+        >
+          <option value="">-- Select User --</option>
+          {/* later: map users dynamically */}
+          <option value="USER_ID_1">User One</option>
+          <option value="USER_ID_2">User Two</option>
         </select>
-        <div className="grid grid-cols-2 gap-2">
-          <select name="deviceType" value={form.deviceType} onChange={handleChange} className="border p-2 rounded">
-            <option>Laptop</option>
-            <option>Desktop</option>
-          </select>
-          <input type="text" name="serialNumber" placeholder="Serial Number" value={form.serialNumber} onChange={handleChange} required className="border p-2 rounded" />
-        </div>
+
+        <select
+          name="deviceType"
+          value={form.deviceType}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        >
+          <option value="Laptop">Laptop</option>
+          <option value="Desktop">Desktop</option>
+        </select>
+
+        <input
+          type="text"
+          name="serialNumber"
+          value={form.serialNumber}
+          onChange={handleChange}
+          placeholder="Serial Number"
+          className="w-full p-2 border rounded"
+          required
+        />
 
         {/* Peripherals */}
-        <div className="grid grid-cols-5 gap-2">
-          {["speaker", "headphone", "monitor", "keyboard", "mouse"].map((p) => (
-            <label key={p} className="flex items-center gap-1 text-sm">
-              <input type="checkbox" name={p} checked={form.peripherals[p]} onChange={handleChange} />
-              {p.charAt(0).toUpperCase() + p.slice(1)}
+        <div className="flex gap-4">
+          {["Speaker", "Headphone", "Monitor", "Keyboard", "Mouse"].map((item) => (
+            <label key={item} className="flex items-center gap-1">
+              <input
+                type="checkbox"
+                value={item}
+                checked={form.peripherals.includes(item)}
+                onChange={handleChange}
+              />
+              {item}
             </label>
           ))}
         </div>
 
-        <input type="text" name="networkIP" placeholder="Network IP" value={form.networkIP} onChange={handleChange} className="w-full border p-2 rounded" />
+        <input
+          type="text"
+          name="networkIP"
+          value={form.networkIP}
+          onChange={handleChange}
+          placeholder="Network IP"
+          className="w-full p-2 border rounded"
+        />
 
-        <button type="submit" className="bg-brand-500 text-white px-4 py-2 rounded">Add Asset</button>
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          {editingId ? "Update Asset" : "Add Asset"}
+        </button>
       </form>
 
-      {/* Assets List */}
-      <div className="bg-white rounded shadow">
-        <div className="grid grid-cols-7 gap-2 p-3 text-xs font-semibold text-gray-500 border-b">
-          <div>User</div>
-          <div>Device</div>
-          <div>Serial</div>
-          <div>Peripherals</div>
-          <div>IP</div>
-          <div>Status</div>
-          <div>Actions</div>
-        </div>
-
-        {assets.map((a) => (
-          <div key={a._id} className="grid grid-cols-7 gap-2 p-3 border-b text-sm items-center">
-            <div>{a.user?.firstName} {a.user?.lastName}</div>
-            <div>{a.deviceType}</div>
-            <div>{a.serialNumber}</div>
-            <div>
-              {Object.keys(a.peripherals).filter((k) => a.peripherals[k]).join(", ")}
-            </div>
-            <div>{a.networkIP}</div>
-            <div>{a.status}</div>
-            <div className="flex gap-2">
-              <button onClick={() => handleDelete(a._id)} className="text-red-600">Delete</button>
-              {a.status === "ChangeRequested" && (
-                <button onClick={() => handleApprove(a._id)} className="text-green-600">Approve</button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Assets Table */}
+      <table className="w-full border">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border p-2">User</th>
+            <th className="border p-2">Device</th>
+            <th className="border p-2">Serial</th>
+            <th className="border p-2">Peripherals</th>
+            <th className="border p-2">Network IP</th>
+            <th className="border p-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {assets.map((asset) => (
+            <tr key={asset._id}>
+              <td className="border p-2">
+                {asset.assignedTo
+                  ? `${asset.assignedTo.firstName} ${asset.assignedTo.lastName}`
+                  : "Unassigned"}
+              </td>
+              <td className="border p-2">{asset.deviceType}</td>
+              <td className="border p-2">{asset.serialNumber}</td>
+              <td className="border p-2">{asset.peripherals.join(", ")}</td>
+              <td className="border p-2">{asset.networkIP}</td>
+              <td className="border p-2 flex gap-2">
+                <button
+                  onClick={() => handleEdit(asset)}
+                  className="bg-yellow-500 text-white px-2 py-1 rounded"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(asset._id)}
+                  className="bg-red-500 text-white px-2 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
+
+export default ITAsset;
 
