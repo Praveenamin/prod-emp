@@ -1,37 +1,36 @@
 const QuickLink = require("../models/QuickLink");
 
-// Create quicklink
+// Create
 exports.createQuickLink = async (req, res) => {
   try {
     const { label, url } = req.body;
-    const quickLink = await QuickLink.create({
-      label,
-      url,
-      createdBy: req.user.id
-    });
-    res.status(201).json(quickLink);
+    const newQuickLink = await QuickLink.create({ label, url });
+    res.status(201).json(newQuickLink);
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to create quick link" });
+    console.error("❌ Create QuickLink error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Get all quicklinks
+// Get all
 exports.getQuickLinks = async (req, res) => {
   try {
     const quickLinks = await QuickLink.find().sort({ createdAt: -1 });
     res.json(quickLinks);
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to fetch quick links" });
+    console.error("❌ Get QuickLinks error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Delete quicklink
+// Delete
 exports.deleteQuickLink = async (req, res) => {
   try {
     await QuickLink.findByIdAndDelete(req.params.id);
-    res.json({ message: "✅ Quick link deleted" });
+    res.json({ message: "QuickLink deleted" });
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to delete quick link" });
+    console.error("❌ Delete QuickLink error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
