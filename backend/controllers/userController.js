@@ -1,8 +1,8 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
-// 📌 Get all users
-exports.getUsers = async (req, res) => {
+// ✅ Get all users
+const getUsers = async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
@@ -11,15 +11,18 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-// 📌 Add new user
-exports.addUser = async (req, res) => {
+// ✅ Create new user
+const createUser = async (req, res) => {
   try {
     const { firstName, lastName, email, password, designation, phoneNumber, alternativeNumber, role } = req.body;
 
+    // Check duplicate email
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: "Email already exists" });
+    if (existing) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
 
-    const hashedPassword = await bcrypt.hash(password || "password123", 10);
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
 
     const user = new User({
       firstName,
@@ -30,6 +33,7 @@ exports.addUser = async (req, res) => {
       phoneNumber,
       alternativeNumber,
       role,
+      status: "Active",
     });
 
     await user.save();
@@ -39,20 +43,18 @@ exports.addUser = async (req, res) => {
   }
 };
 
-// 📌 Update user
-exports.updateUser = async (req, res) => {
+// ✅ Update user
+const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = { ...req.body };
+    const updates = { ...req.body };
 
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
-    } else {
-      delete updateData.password;
+    if (updates.password) {
+      updates.password = await bcrypt.hash(updates.password, 10);
     }
 
-    const user = await User.findByIdAndUpdate(id, updateData, { new: true });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findByIdAndUpdate(id, updates, { new: true });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json(user);
   } catch (err) {
@@ -60,12 +62,25 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// 📌 Hold user
-exports.holdUser = async (req, res) => {
+// ✅ Delete user
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await User.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: "User not found" });
+
+    res.json({ message: "User deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ✅ Put user On Hold
+const holdUser = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findByIdAndUpdate(id, { status: "On Hold" }, { new: true });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json(user);
   } catch (err) {
@@ -73,12 +88,12 @@ exports.holdUser = async (req, res) => {
   }
 };
 
-// 📌 Activate user
-exports.activateUser = async (req, res) => {
+// ✅ Reactivate user
+const activateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findByIdAndUpdate(id, { status: "Active" }, { new: true });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json(user);
   } catch (err) {
@@ -86,16 +101,12 @@ exports.activateUser = async (req, res) => {
   }
 };
 
-// 📌 Delete user
-exports.deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findByIdAndDelete(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    res.json({ message: "User deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+module.exports = {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  holdUser,
+  activateUser,
 };
 

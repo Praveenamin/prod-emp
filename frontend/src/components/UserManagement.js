@@ -109,7 +109,7 @@ export default function UserManagement() {
             <div>{u.status || 'Active'}</div>
             <div className="flex gap-2">
               <button onClick={() => handleEdit(u)} className="text-yellow-600 hover:text-yellow-800">Edit</button>
-              {u.status === "On Hold" ? (
+              {u.status === 'On Hold' ? (
                 <button onClick={() => handleActivate(u._id)} className="text-green-600">Activate</button>
               ) : (
                 <button onClick={() => handleHold(u._id)} className="text-indigo-600">Hold</button>

@@ -1,17 +1,31 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const userController = require('../controllers/userController');
-const { authMiddleware, adminOnly } = require('../middleware/authMiddleware');
+const {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  holdUser,
+  activateUser,
+} = require("../controllers/userController");
 
-// All user routes require login
-router.use(authMiddleware);
+// GET all users
+router.get("/", getUsers);
 
-// Only admins can manage users
-router.get('/', adminOnly, userController.getAllUsers);
-router.post('/', adminOnly, userController.createUser);
-router.put('/:id', adminOnly, userController.updateUser);
-router.delete('/:id', adminOnly, userController.deleteUser);
-router.patch('/hold/:id', adminOnly, userController.holdUser);
+// Create new user
+router.post("/", createUser);
+
+// Update user by ID
+router.put("/:id", updateUser);
+
+// Delete user by ID
+router.delete("/:id", deleteUser);
+
+// Put user on hold
+router.patch("/hold/:id", holdUser);
+
+// Reactivate user
+router.patch("/activate/:id", activateUser);
 
 module.exports = router;
 
