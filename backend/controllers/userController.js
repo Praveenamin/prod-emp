@@ -1,158 +1,82 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const bcrypt = require('bcryptjs');
+const User = require('../models/User');
 
-// =============================
-// REGISTER (Admin or Employee)
-// =============================
-exports.registerUser = async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, designation, phoneNumber, alternativeNumber, role } = req.body;
-
-    // Check existing user
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-      designation,
-      phoneNumber,
-      alternativeNumber,
-      role: role || "Employee",
-      status: "Active"
-    });
-
-    res.status(201).json({ message: "User created", user });
-  } catch (err) {
-    console.error("❌ Register error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// =============================
-// LOGIN
-// =============================
-exports.loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-
-    // Generate JWT
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    res.json({
-      token,
-      user: { id: user._id, email: user.email, role: user.role }
-    });
-  } catch (err) {
-    console.error("❌ Login error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// =============================
-// USER MANAGEMENT
-// =============================
+// GET /api/users
 exports.getUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().select('-password');
     res.json(users);
   } catch (err) {
-    console.error("❌ Get users error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error('Get users error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
+// POST /api/users
 exports.createUser = async (req, res) => {
   try {
     const { firstName, lastName, email, password, designation, phoneNumber, alternativeNumber, role } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'User already exists' });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-      designation,
-      phoneNumber,
-      alternativeNumber,
-      role: role || "Employee",
-      status: "Active"
-    });
-
-    res.status(201).json(user);
+    const hash = await bcrypt.hash(password, 10);
+    const u = await User.create({ firstName, lastName, email, password: hash, designation, phoneNumber, alternativeNumber, role: role || 'Employee', status: 'Active' });
+    res.status(201).json(u);
   } catch (err) {
-    console.error("❌ Create user error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error('Create user error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
+// PUT /api/users/:id
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-
-    if (updates.password) {
-      updates.password = await bcrypt.hash(updates.password, 10);
-    }
-
-    const user = await User.findByIdAndUpdate(id, updates, { new: true });
-    res.json(user);
+    const updates = { ...req.body };
+    if (updates.password) updates.password = await bcrypt.hash(updates.password, 10);
+    const u = await User.findByIdAndUpdate(id, updates, { new: true });
+    res.json(u);
   } catch (err) {
-    console.error("❌ Update user error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error('Update user error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
+// DELETE /api/users/:id
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
     await User.findByIdAndDelete(id);
-    res.json({ message: "User deleted" });
+    res.json({ message: 'User deleted' });
   } catch (err) {
-    console.error("❌ Delete user error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error('Delete user error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
+// PATCH /api/users/hold/:id
 exports.holdUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findByIdAndUpdate(id, { status: "On-Hold" }, { new: true });
-    res.json(user);
+    const u = await User.findByIdAndUpdate(id, { status: 'On-Hold' }, { new: true });
+    res.json(u);
   } catch (err) {
-    console.error("❌ Hold user error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error('Hold user error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
+// PATCH /api/users/activate/:id
 exports.activateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findByIdAndUpdate(id, { status: "Active" }, { new: true });
-    res.json(user);
+    const u = await User.findByIdAndUpdate(id, { status: 'Active' }, { new: true });
+    res.json(u);
   } catch (err) {
-    console.error("❌ Activate user error:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error('Activate user error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 

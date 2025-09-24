@@ -1,15 +1,9 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const { login, register } = require("../controllers/authController");
+const authController = require('../controllers/authController');
 
-// @route   POST /api/auth/login
-// @desc    Authenticate user & get token
-router.post("/login", login);
-
-// @route   POST /api/auth/register
-// @desc    Register new user (for testing/future use)
-// ⚠️ You might disable this in production if only admins can create users
-router.post("/register", register);
+router.post('/login', authController.login);
+router.post('/register', authController.register);
 
 module.exports = router;
 

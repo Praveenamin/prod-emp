@@ -1,28 +1,13 @@
-const express = require("express");
-const {
-  registerUser,
-  loginUser,
-  getUsers,
-  createUser,
-  updateUser,
-  deleteUser,
-  holdUser,
-  activateUser
-} = require("../controllers/userController");
-
+const express = require('express');
 const router = express.Router();
+const uc = require('../controllers/userController');
 
-// Auth routes
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-
-// User management routes
-router.get("/", getUsers);
-router.post("/", createUser);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
-router.patch("/hold/:id", holdUser);
-router.patch("/activate/:id", activateUser);
+router.get('/', uc.getUsers);
+router.post('/', uc.createUser);
+router.put('/:id', uc.updateUser);
+router.delete('/:id', uc.deleteUser);
+router.patch('/hold/:id', uc.holdUser);
+router.patch('/activate/:id', uc.activateUser);
 
 module.exports = router;
 

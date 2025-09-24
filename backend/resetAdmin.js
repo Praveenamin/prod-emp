@@ -1,41 +1,33 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-require("dotenv").config();
+// backend/resetAdmin.js
+require('dotenv').config();
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const User = require('./models/User');
 
-const User = require("./models/User");
+(async () => {
+  const MONGO_URI = process.env.MONGO_URI || 'mongodb://employee_mongo:27017/employee_portal';
+  await mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://employee_mongo:27017/employee_portal";
+  const email = 'admin@assistanz.com';
+  const plain = process.env.DEFAULT_ADMIN_PASSWORD || 'Z33y5Jtke5WjRtyK';
+  const hash = await bcrypt.hash(plain, 10);
 
-async function resetAdmin() {
-  try {
-    await mongoose.connect(MONGO_URI);
-    console.log("✅ Connected to MongoDB");
+  const res = await User.findOneAndUpdate(
+    { email },
+    {
+      firstName: 'Admin',
+      lastName: 'User',
+      email,
+      password: hash,
+      role: 'Admin',
+      status: 'Active',
+      updatedAt: new Date()
+    },
+    { upsert: true, new: true }
+  );
 
-    const email = "admin@assistanz.com";
-    const password = "Admin@123"; // new reset password
-    const hashed = await bcrypt.hash(password, 10);
-
-    const admin = await User.findOneAndUpdate(
-      { email },
-      {
-        firstName: "Admin",
-        lastName: "User",
-        email,
-        password: hashed,
-        role: "Admin",
-        status: "Active",
-      },
-      { new: true, upsert: true }
-    );
-
-    console.log("✅ Admin reset:", admin.email);
-    console.log("👉 Login with:", email, "/", password);
-    process.exit(0);
-  } catch (err) {
-    console.error("❌ Error:", err);
-    process.exit(1);
-  }
-}
-
-resetAdmin();
+  console.log('✅ Admin upserted:', res.email);
+  console.log('👉 Login with:', email, '/', plain);
+  process.exit(0);
+})();
 
