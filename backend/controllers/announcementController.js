@@ -1,37 +1,36 @@
 const Announcement = require("../models/Announcement");
 
-// Create new announcement
+// Create
 exports.createAnnouncement = async (req, res) => {
   try {
     const { title, message } = req.body;
-    const announcement = await Announcement.create({
-      title,
-      message,
-      createdBy: req.user.id
-    });
-    res.status(201).json(announcement);
+    const newAnnouncement = await Announcement.create({ title, message });
+    res.status(201).json(newAnnouncement);
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to create announcement" });
+    console.error("❌ Create Announcement error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Get all announcements
+// Get all
 exports.getAnnouncements = async (req, res) => {
   try {
     const announcements = await Announcement.find().sort({ createdAt: -1 });
     res.json(announcements);
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to fetch announcements" });
+    console.error("❌ Get Announcements error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Delete announcement
+// Delete
 exports.deleteAnnouncement = async (req, res) => {
   try {
     await Announcement.findByIdAndDelete(req.params.id);
-    res.json({ message: "✅ Announcement deleted" });
+    res.json({ message: "Announcement deleted" });
   } catch (err) {
-    res.status(500).json({ message: "❌ Failed to delete announcement" });
+    console.error("❌ Delete Announcement error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

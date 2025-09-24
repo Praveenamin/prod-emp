@@ -1,12 +1,19 @@
 const express = require("express");
-const { createAnnouncement, getAnnouncements, deleteAnnouncement } = require("../controllers/announcementController");
-const authMiddleware = require("../middleware/authMiddleware");
-
 const router = express.Router();
+const {
+  createAnnouncement,
+  getAnnouncements,
+  deleteAnnouncement,
+} = require("../controllers/announcementController");
 
-router.post("/", authMiddleware, createAnnouncement);
-router.get("/", authMiddleware, getAnnouncements);
-router.delete("/:id", authMiddleware, deleteAnnouncement);
+// Create announcement
+router.post("/", createAnnouncement);
+
+// Get all announcements
+router.get("/", getAnnouncements);
+
+// Delete announcement by ID
+router.delete("/:id", deleteAnnouncement);
 
 module.exports = router;
 
