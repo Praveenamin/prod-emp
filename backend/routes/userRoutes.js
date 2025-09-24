@@ -1,6 +1,7 @@
 const express = require("express");
-const router = express.Router();
 const {
+  registerUser,
+  loginUser,
   getUsers,
   createUser,
   updateUser,
@@ -9,28 +10,18 @@ const {
   activateUser
 } = require("../controllers/userController");
 
-// @route   GET /api/users
-// @desc    Get all users
+const router = express.Router();
+
+// Auth routes
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+
+// User management routes
 router.get("/", getUsers);
-
-// @route   POST /api/users
-// @desc    Create new user
 router.post("/", createUser);
-
-// @route   PUT /api/users/:id
-// @desc    Update user
 router.put("/:id", updateUser);
-
-// @route   DELETE /api/users/:id
-// @desc    Delete user
 router.delete("/:id", deleteUser);
-
-// @route   PATCH /api/users/hold/:id
-// @desc    Put user on hold
 router.patch("/hold/:id", holdUser);
-
-// @route   PATCH /api/users/activate/:id
-// @desc    Reactivate user
 router.patch("/activate/:id", activateUser);
 
 module.exports = router;
