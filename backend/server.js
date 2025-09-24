@@ -1,36 +1,42 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
 
-dotenv.config();
+const userRoutes = require("./routes/userRoutes");
+const assetRoutes = require("./routes/assetRoutes");
 
 const app = express();
+
+// =============================
+// Middleware
+// =============================
 app.use(cors());
 app.use(express.json());
 
+// =============================
 // Routes
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const announcementRoutes = require('./routes/announcementRoutes');
-const quicklinkRoutes = require('./routes/quicklinkRoutes');
+// =============================
+app.use("/api/users", userRoutes);   // user management
+app.use("/api/auth", userRoutes);    // register & login (mounted together)
+app.use("/api/assets", assetRoutes); // IT assets
+app.use("/api/auth", require("./routes/authRoutes"));
+// =============================
+// DB Connection
+// =============================
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/announcements', announcementRoutes);
-app.use('/api/quicklinks', quicklinkRoutes);
-
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error(err));
-
+// =============================
+// Start Server
+// =============================
 const PORT = process.env.PORT || 3338;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
-const assetRoutes = require("./routes/assetRoutes");
-app.use("/api/assets", assetRoutes);
-
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running on port ${PORT}`);
+});
 
